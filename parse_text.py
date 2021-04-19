@@ -1,15 +1,55 @@
-"""
-print("\nTrying Stanford & Stanza...")
+import numpy as np
+import pandas as pd
+import textstat
+import os
 import stanza
-sample = text_data[0]
-stanza.download('en')
-nlp = stanza.Pipeline('en')
-doc = nlp(sample)
-#print(doc.sentences[0].dependencies)
-
-import stanfordnlp
-stanfordnlp.download('en')
-nlp = stanfordnlp.Pipeline()
-doc2 = text_data[0]
-print(doc.sentences[0].print_dependencies())
+from stanza.server import CoreNLPClient
+#stanza.install_corenlp()
+#stanza.download('en')
 """
+df = pd.read_csv('./Data/Political.csv', header=0)
+text_data = np.array(df.iloc[:, 3])
+nlp = stanza.Pipeline(lang='en', processors='tokenize,mwt,pos,lemma,depparse')
+sample = text_data[0]
+
+doc = nlp(sample)
+doc.sentences[0].print_dependencies()
+"""
+
+def count_clauses(text):
+    annotators="tokenize,ssplit,pos,lemma,parse"
+    pattern = 'S'
+    matches = client.tregex(text, pattern, annotators=annotators)
+    return sum([len(sentence.keys()) for sentence in matches['sentences']])
+
+with CoreNLPClient(timeout=30000, memory='16G') as client:
+    for file in sorted(os.listdir('./Data')):
+        file_name_csv = './' + file[:-4] + '- Clause Analysis.csv'
+        file_name_xl = './' + file[:-4] + ' - Clause Analysis.xlsx'
+        print('working on:', file)
+
+        #Read in CSV
+        df = pd.read_csv('./Data/' + file, header=0)
+        text_data = np.array(df.iloc[:, 3])
+        pod_id = np.array(df.iloc[:, 0])
+        speaker_id = np.array(df.iloc[:, 2])
+        sentence_complexity = []
+        counted_clauses = []
+        instance_ids = []
+        for i, instance in enumerate(text_data):
+            no_clauses = count_clauses(instance)
+            counted_clauses.append(no_clauses)
+            sentence_complexity.append(no_clauses/textstat.sentence_count(instance))
+
+            inst_id = str(pod_id[i]) + '_' + str(speaker_id[i])
+            instance_ids.append(inst_id)
+
+        clause_analysis = {
+            'instance' : instance_ids,
+            'number of clauses' : counted_clauses,
+            'sentence complexity' : sentence_complexity
+        }
+
+        new_df = pd.DataFrame(clause_analysis, columns=['instance', 'number of clauses', 'sentence complexity'])
+        new_df.to_excel(file_name_xl, index=False, sheet_name='Clause')
+        new_df.to_csv(file_name_csv, index=False)
