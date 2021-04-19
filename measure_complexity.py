@@ -14,7 +14,6 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
 tokenizer = RegexpTokenizer(r"\w+")
-lemmatizer = WordNetLemmatizer()
 
 for file in sorted(os.listdir('./Data')):
     file_name_csv = './' + file[:-4] + '.csv'
@@ -30,7 +29,7 @@ for file in sorted(os.listdir('./Data')):
     # measure complexity & record results in csv file
     instance_ids = []
     ttr = []
-    mltd = []
+    mtld = []
     number_of_words = []
     readability = []
     unique_words = []
@@ -52,12 +51,13 @@ for file in sorted(os.listdir('./Data')):
         readability.append(textstat.flesch_reading_ease(instance))
         
         # remove stopwords & lemmatize
+        lemmatizer = WordNetLemmatizer()
         instance_no_stopwords = remove_stopwords(instance)
         new_instance = ' '.join([lemmatizer.lemmatize(w) for w in word_tokenize(instance_no_stopwords)])
         
         lex = LexicalRichness(new_instance)
         ttr.append(lex.ttr)
-        mltd.append(lex.mtld(threshold=0.72))
+        mtld.append(lex.mtld(threshold=0.72))
         inst_id = str(pod_id[i]) + '_' + str(speaker_id[i])
         instance_ids.append(inst_id)
         unique_words.append(lex.terms)
@@ -65,7 +65,7 @@ for file in sorted(os.listdir('./Data')):
 
     measurements = {
         'instance' : instance_ids,
-        'mltd' : mltd,
+        'mtld' : mtld,
         'ttr' : ttr,
         'readability' : readability,
         'unique_words' : unique_words,
@@ -73,7 +73,7 @@ for file in sorted(os.listdir('./Data')):
         'avg word len' : avg_word_length
     }
 
-    new_df = pd.DataFrame(measurements, columns=['instance', 'mltd', 'ttr', 'readability', 'unique_words', 
+    new_df = pd.DataFrame(measurements, columns=['instance', 'mtld', 'ttr', 'readability', 'unique_words', 
         'avg sentence len', 'avg word len'])
     new_df.to_excel(file_name_xl, index=False, sheet_name='Politics')
     new_df.to_csv(file_name_csv, index=False)
