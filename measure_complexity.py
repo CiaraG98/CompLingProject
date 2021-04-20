@@ -16,8 +16,7 @@ from nltk.tokenize import word_tokenize
 tokenizer = RegexpTokenizer(r"\w+")
 
 for file in sorted(os.listdir('./Data')):
-    file_name_csv = './' + file[:-4] + '.csv'
-    file_name_xl = './' + file[:-4] + '.xlsx'
+    file_name_xl = './' + file[:-4] + 'M.xls'
     print('working on:', file)
 
     #Read in CSV
@@ -76,4 +75,3 @@ for file in sorted(os.listdir('./Data')):
     new_df = pd.DataFrame(measurements, columns=['instance', 'mtld', 'ttr', 'readability', 'unique_words', 
         'avg sentence len', 'avg word len'])
     new_df.to_excel(file_name_xl, index=False, sheet_name='Politics')
-    new_df.to_csv(file_name_csv, index=False)

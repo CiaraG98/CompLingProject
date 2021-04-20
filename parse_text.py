@@ -6,15 +6,6 @@ import stanza
 from stanza.server import CoreNLPClient
 #stanza.install_corenlp()
 #stanza.download('en')
-"""
-df = pd.read_csv('./Data/Political.csv', header=0)
-text_data = np.array(df.iloc[:, 3])
-nlp = stanza.Pipeline(lang='en', processors='tokenize,mwt,pos,lemma,depparse')
-sample = text_data[0]
-
-doc = nlp(sample)
-doc.sentences[0].print_dependencies()
-"""
 
 def count_clauses(text):
     annotators="tokenize,ssplit,pos,lemma,parse"
@@ -24,8 +15,7 @@ def count_clauses(text):
 
 with CoreNLPClient(timeout=30000, memory='16G') as client:
     for file in sorted(os.listdir('./Data')):
-        file_name_csv = './' + file[:-4] + '- Clause Analysis.csv'
-        file_name_xl = './' + file[:-4] + ' - Clause Analysis.xlsx'
+        file_name_xl = './' + file[:-4] + ' - Clause Analysis.xls'
         print('working on:', file)
 
         #Read in CSV
@@ -52,4 +42,3 @@ with CoreNLPClient(timeout=30000, memory='16G') as client:
 
         new_df = pd.DataFrame(clause_analysis, columns=['instance', 'number of clauses', 'sentence complexity'])
         new_df.to_excel(file_name_xl, index=False, sheet_name='Clause')
-        new_df.to_csv(file_name_csv, index=False)
