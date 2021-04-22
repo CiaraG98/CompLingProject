@@ -1,3 +1,8 @@
+"""
+@author Ciara Gilsenan
+@version 20/04/2021
+Uses Stanza to parse dataset entries and get number of clauses
+"""
 import numpy as np
 import pandas as pd
 import textstat
@@ -8,6 +13,7 @@ from stanza.server import CoreNLPClient
 #stanza.download('en')
 
 def count_clauses(text):
+    # counts number of matsches Tregex makes to 'S' in the dataset entry
     annotators="tokenize,ssplit,pos,lemma,parse"
     pattern = 'S'
     matches = client.tregex(text, pattern, annotators=annotators)
@@ -27,6 +33,7 @@ with CoreNLPClient(timeout=30000, memory='16G') as client:
         counted_clauses = []
         instance_ids = []
         for i, instance in enumerate(text_data):
+            # calculate sentence complexity
             no_clauses = count_clauses(instance)
             counted_clauses.append(no_clauses)
             sentence_complexity.append(no_clauses/textstat.sentence_count(instance))
@@ -34,11 +41,13 @@ with CoreNLPClient(timeout=30000, memory='16G') as client:
             inst_id = str(pod_id[i]) + '_' + str(speaker_id[i])
             instance_ids.append(inst_id)
 
+        # make dictionary of results
         clause_analysis = {
             'instance' : instance_ids,
             'number of clauses' : counted_clauses,
             'sentence complexity' : sentence_complexity
         }
 
+        # export to excel sheet
         new_df = pd.DataFrame(clause_analysis, columns=['instance', 'number of clauses', 'sentence complexity'])
         new_df.to_excel(file_name_xl, index=False, sheet_name='Clause')

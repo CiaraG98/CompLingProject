@@ -1,7 +1,7 @@
 """
-@authors Ciara Gilsenan
-@version 17/04/2021
-Text Treatment for Data
+@author Ciara Gilsenan
+@version 20/04/2021
+Measures Linguistic Complexity of Podcast Data
 """
 import os
 from lexicalrichness import LexicalRichness
@@ -16,7 +16,7 @@ from nltk.tokenize import word_tokenize
 tokenizer = RegexpTokenizer(r"\w+")
 
 for file in sorted(os.listdir('./Data')):
-    file_name_xl = './' + file[:-4] + 'M.xls'
+    file_name_xl = './' + file[:-4] + 'Linguistic Complexity Measurements.xls'
     print('working on:', file)
 
     #Read in CSV
@@ -25,7 +25,7 @@ for file in sorted(os.listdir('./Data')):
     pod_id = np.array(df.iloc[:, 0])
     speaker_id = np.array(df.iloc[:, 2])
 
-    # measure complexity & record results in csv file
+    # measure complexity & record results in excel sheet
     instance_ids = []
     ttr = []
     mtld = []
@@ -35,18 +35,20 @@ for file in sorted(os.listdir('./Data')):
     avg_sentence_length = []
     avg_word_length = []
     for i, instance in enumerate(text_data):
+        # lexical richness instance for entry before lemmatization and stopword removal
         lex_with_stopwords = LexicalRichness(instance)
         number_of_words.append(lex_with_stopwords.words)
         
         # mean sentence length
         mean_sentence_len = int(lex_with_stopwords.words / textstat.sentence_count(instance))
         avg_sentence_length.append(mean_sentence_len)
-        
+
         # mean word length
         num_chars = sum([len(w) for w in tokenizer.tokenize(instance)])
         mean_word_len = round(num_chars / lex_with_stopwords.words, 1)
         avg_word_length.append(mean_word_len)
-
+        
+        # readability
         readability.append(textstat.flesch_reading_ease(instance))
         
         # remove stopwords & lemmatize
@@ -54,14 +56,16 @@ for file in sorted(os.listdir('./Data')):
         instance_no_stopwords = remove_stopwords(instance)
         new_instance = ' '.join([lemmatizer.lemmatize(w) for w in word_tokenize(instance_no_stopwords)])
         
+        # calculate TTR and MTLD
         lex = LexicalRichness(new_instance)
         ttr.append(lex.ttr)
         mtld.append(lex.mtld(threshold=0.72))
+
         inst_id = str(pod_id[i]) + '_' + str(speaker_id[i])
         instance_ids.append(inst_id)
         unique_words.append(lex.terms)
 
-
+    # create dictionary with results
     measurements = {
         'instance' : instance_ids,
         'mtld' : mtld,
@@ -72,6 +76,7 @@ for file in sorted(os.listdir('./Data')):
         'avg word len' : avg_word_length
     }
 
+    # export to excel sheet
     new_df = pd.DataFrame(measurements, columns=['instance', 'mtld', 'ttr', 'readability', 'unique_words', 
         'avg sentence len', 'avg word len'])
     new_df.to_excel(file_name_xl, index=False, sheet_name='Politics')
